@@ -1,9 +1,13 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
 # Next.js build output
 .next/
 out/
-
-# Node modules
-node_modules/
+dist/
+build/
 
 # Environment variables
 .env
@@ -12,28 +16,89 @@ node_modules/
 .env.test.local
 .env.production.local
 
-# npm/yarn cache
-.npm/
-.yarn/
+# Package manager files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm/
+.yarn/
+.pnpm-store/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory
+coverage/
+*.lcov
+.nyc_output
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional caches
+.eslintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Vercel
+.vercel
+
+# Turbo (for Turbopack)
+.turbo
 
 # IDE specific files
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
 
-# macOS specific files
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Logs
 logs/
 *.log
 
+# Temporary folders
+tmp/
+temp/
+
 # Misc
 *.tgz
 *.zip
 
-# Local
+# Three.js assets (large 3D models)
+*.glb
+*.gltf
+*.fbx
+*.obj
+*.3ds
 
+# GSAP license files (if using commercial license)
+gsap-bonus.tgz
+
+# Local
 Civiz

@@ -5,8 +5,8 @@ import ViewToggle from './ViewToggle';
 import VisionCollage from './VisionCollage';
 import VisionForm from './VisionForm';
 import FundingCategories from './FundingCategories';
-import { Button } from "@/components/Button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/card"
+import { Button } from "./button"
+import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import {
   Heart,
   Users,
