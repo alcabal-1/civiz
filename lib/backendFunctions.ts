@@ -28,6 +28,7 @@ export const backendFunctions = {
       text: visionData.text,
       imageUrl: 'https://via.placeholder.com/800x600',
       category: visionData.category,
+      address: 'Placeholder Address, SF', // Required field
       userId: visionData.userId,
       points: 3,
       likes: [],

@@ -8,12 +8,15 @@ export interface Vision {
   text: string;
   imageUrl: string;
   category: string;
-  address?: string;
+  address: string;
+  originalImageUrl?: string; // Street View image
+  generatedImageUrl?: string; // DALL-E transformed image
   userId: string;
   points: number;
   likes: string[]; // Array of user IDs who liked
   createdAt: Date;
   isShared: boolean;
+  isGenerating?: boolean; // Loading state for image generation
 }
 
 interface VisionStore {
@@ -24,13 +27,14 @@ interface VisionStore {
   viewMode: 'user' | 'city';
   
   // Actions
-  submitVision: (text: string) => Promise<void>;
+  submitVision: (text: string, address: string) => Promise<void>;
   likeVision: (visionId: string) => void;
   toggleViewMode: () => void;
   getUserVisions: () => Vision[];
   getCityVisions: () => Vision[];
   getTopVisionsByCategory: () => Record<string, Vision>;
   matchCategory: (text: string) => string;
+  updateVisionImageGeneration: (visionId: string, isGenerating: boolean, generatedImageUrl?: string) => void;
 }
 
 // Mock DALL-E image URLs for demo
@@ -50,7 +54,7 @@ const sampleVisions: Vision[] = [
     text: 'Transform Golden Gate Park into a sustainable urban farm with community gardens',
     imageUrl: mockImages[0],
     category: 'Parks & Recreation',
-    address: 'Golden Gate Park, SF',
+    address: 'Golden Gate Park, San Francisco, CA',
     userId: 'user-2',
     points: 15,
     likes: ['user-3', 'user-4'],
@@ -62,7 +66,7 @@ const sampleVisions: Vision[] = [
     text: 'Create 24/7 youth mentorship centers with tech training and art programs',
     imageUrl: mockImages[1],
     category: 'Community Youth Centers',
-    address: 'Mission District, SF',
+    address: '16th Street, Mission District, San Francisco, CA',
     userId: 'user-3',
     points: 12,
     likes: ['user-1', 'user-2'],
@@ -74,7 +78,7 @@ const sampleVisions: Vision[] = [
     text: 'Build affordable micro-housing units for essential workers near transit hubs',
     imageUrl: mockImages[2],
     category: 'Affordable Housing',
-    address: 'SOMA, SF',
+    address: 'Market Street, SOMA, San Francisco, CA',
     userId: 'user-4',
     points: 18,
     likes: ['user-1', 'user-2', 'user-3'],
@@ -89,26 +93,89 @@ export const useVisionStore = create<VisionStore>((set, get) => ({
   currentUserId: 'user-1', // Mock current user
   viewMode: 'user',
 
-  submitVision: async (text: string) => {
+  submitVision: async (text: string, address: string) => {
     const { currentUserId, matchCategory } = get();
     
-    // Create new vision
+    // Create new vision with loading state
     const newVision: Vision = {
       id: `vision-${Date.now()}`,
       text,
-      imageUrl: mockImages[Math.floor(Math.random() * mockImages.length)],
+      imageUrl: mockImages[Math.floor(Math.random() * mockImages.length)], // Temporary placeholder
       category: matchCategory(text),
+      address,
       userId: currentUserId,
       points: POINT_VALUES.visionSubmission,
       likes: [],
       createdAt: new Date(),
-      isShared: false
+      isShared: false,
+      isGenerating: true
     };
 
+    // Add vision to store immediately with loading state
     set((state) => ({
       visions: [newVision, ...state.visions],
       userPoints: state.userPoints + POINT_VALUES.visionSubmission
     }));
+
+    try {
+      // Call test transform API to debug the issue
+      const response = await fetch('/api/test-transform', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          address,
+          creativePrompt: text
+        }),
+      });
+
+      const result = await response.json();
+      console.log('API Response:', result); // Debug log
+
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP ${response.status}`);
+      }
+
+      if (result.success && result.imageUrl) {
+        console.log('Updating vision with image URL:', result.imageUrl); // Debug log
+        
+        // Update vision with generated image
+        set((state) => {
+          const updatedVisions = state.visions.map(v => 
+            v.id === newVision.id 
+              ? { 
+                  ...v, 
+                  generatedImageUrl: result.imageUrl,
+                  imageUrl: result.imageUrl, // Use generated image as main image
+                  isGenerating: false 
+                }
+              : v
+          );
+          
+          console.log('Updated visions:', updatedVisions.find(v => v.id === newVision.id)); // Debug log
+          return { visions: updatedVisions };
+        });
+        
+        console.log('Vision state update triggered'); // Debug log
+      } else {
+        console.error('API response missing success or imageUrl:', result); // Debug log
+        throw new Error(result.error || 'Failed to generate image - no URL returned');
+      }
+    } catch (error) {
+      console.error('Error generating vision image:', error);
+      
+      // Update vision to remove loading state on error
+      set((state) => ({
+        visions: state.visions.map(v => 
+          v.id === newVision.id 
+            ? { ...v, isGenerating: false }
+            : v
+        )
+      }));
+      
+      throw error; // Re-throw for component to handle
+    }
   },
 
   likeVision: (visionId: string) => {
@@ -193,5 +260,22 @@ export const useVisionStore = create<VisionStore>((set, get) => ({
     
     // Default to Parks & Recreation if no match
     return 'Parks & Recreation';
+  },
+
+  updateVisionImageGeneration: (visionId: string, isGenerating: boolean, generatedImageUrl?: string) => {
+    set((state) => ({
+      visions: state.visions.map(v => 
+        v.id === visionId 
+          ? { 
+              ...v, 
+              isGenerating,
+              ...(generatedImageUrl ? { 
+                generatedImageUrl, 
+                imageUrl: generatedImageUrl 
+              } : {})
+            }
+          : v
+      )
+    }));
   }
 }));

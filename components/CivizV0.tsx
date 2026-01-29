@@ -5,6 +5,8 @@ import ViewToggle from './ViewToggle';
 import VisionCollage from './VisionCollage';
 import VisionForm from './VisionForm';
 import FundingCategories from './FundingCategories';
+import DebugVisionState from './DebugVisionState';
+import { useVisionStore } from '../lib/visionStore'; 
 import { Button } from "./button"
 import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import {
@@ -61,25 +63,15 @@ const civicCategories = [
 ]
 
 export default function Civizv0() {
-  const [userPoints, setUserPoints] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [vision, setVision] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrollY, setScrollY] = useState(0)
+  const userPoints = useVisionStore((state) => state.userPoints);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
-
-  const handleVisionSubmit = () => {
-    if (vision.trim()) {
-      setUserPoints((prev) => prev + 50)
-      setVision("")
-      // Here you would typically submit to your backend
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -109,7 +101,7 @@ export default function Civizv0() {
               </a>
               <div className="flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-full">
                 <Coins className="w-4 h-4 text-blue-600" />
-                <span className="font-semibold text-blue-600">{(12345).toLocaleString()}</span>
+                <span className="font-semibold text-blue-600">{userPoints.toLocaleString()}</span>
               </div>
             </nav>
 
@@ -149,7 +141,7 @@ export default function Civizv0() {
 
       {/* Dynamic Growing Input Field */}
       <div
-        className="fixed inset-x-0 z-40 px-4 pointer-events-none"
+        className="fixed inset-x-0 z-40 px-4"
         style={{
           top: `${Math.max(180, 280 - scrollY * 0.4)}px`,
         }}
@@ -157,46 +149,7 @@ export default function Civizv0() {
         <VisionForm />
       </div>
 
-      {/* Floating Points Indicator */}
-      <div
-        className={`fixed z-40 pointer-events-none transition-all duration-300 ${
-          isActive ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          top: `${Math.max(260, 360 - scrollY * 0.5)}px`,
-          left: "20px",
-        }}
-      >
-        <div className="pointer-events-auto">
-          <div className="flex items-center space-x-2 bg-white/95 backdrop-blur-md px-3 py-2 rounded-full shadow-xl">
-            <Gift className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-semibold text-blue-600">+50 pts</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Floating Submit Button */}
-      <div
-        className={`fixed z-40 pointer-events-none transition-all duration-300 ${
-          isActive ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          top: `${Math.max(260, 360 - scrollY * 0.5)}px`,
-          right: "20px",
-        }}
-      >
-        <div className="pointer-events-auto">
-          console.log("VISION IS", vision);
-          <Button
-            onClick={handleVisionSubmit}
-            size="sm"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-xl hover:shadow-2xl transition-all"
-            disabled={!vision.trim()}
-          >
-            Submit Vision
-          </Button>
-        </div>
-      </div>
 
       {/* Spacer for when elements are in normal flow */}
       <div className="h-8" style={{ marginTop: scrollY > 400 ? "0" : "50px" }} />
@@ -267,6 +220,9 @@ export default function Civizv0() {
         </div>
       </footer>
       </main>
+      
+      {/* Debug component - remove in production */}
+      <DebugVisionState />
     </div>
   )
 }
